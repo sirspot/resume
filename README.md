@@ -1,3 +1,5 @@
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/sirspot/resume) 
+
 # Resume-As-Code
 
 Copyright (c) 2025, Adam Rosenberg. All rights reserved.
