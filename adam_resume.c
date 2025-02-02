@@ -377,6 +377,12 @@ JSON_OBJECT_END_SECTION()
 */
 #define JSON_VALUE_KEYWORD_MAX_LENGTH 5
 
+/** this is the max value of a signed int32.
+    INT_MAX on a 32bit system is 2GB so it should
+    be enough for any text being added to this resume :)
+*/
+#define MAX_STRING_LENGTH 2147483647
+
 //
 // MARK: ENUMS
 //
@@ -1702,10 +1708,8 @@ static Result_t SetText(
     char** dest,
     const char* src)
 {
-    // set the text with practically no upper bounds.
-    // INT_MAX on a 32bit system is 2GB so it should
-    // be enough for any text being added to this resume :)
-    return SetTextSubstr(dest, src, INT_MAX);
+    // set the text with practically no upper bounds
+    return SetTextSubstr(dest, src, MAX_STRING_LENGTH);
 }
 
 /**********************************************************/
@@ -2427,10 +2431,8 @@ static Entry_t* ManagedEntriesAppend(
     const char* start,
     const char* end)
 {
-    // set the text with practically no upper bounds.
-    // INT_MAX on a 32bit system is 2GB so it should
-    // be enough for any text being added to this resume :)
-    return ManagedEntriesAppendSubstr(me, text, INT_MAX, start, end);
+    // set the text with practically no upper bounds
+    return ManagedEntriesAppendSubstr(me, text, MAX_STRING_LENGTH, start, end);
 }
 
 /**********************************************************/
@@ -3732,10 +3734,8 @@ static Result_t ResumeAddEntry(
     SectionData_t* sectionData = ResumeGetSectionData(me, section);
     if(sectionData)
     {
-        // set the text with practically no upper bounds.
-        // INT_MAX on a 32bit system is 2GB so it should
-        // be enough for any text being added to this resume :)
-        result = SectionAddEntry(sectionData, me, text, INT_MAX, start, end);
+        // set the text with practically no upper bounds
+        result = SectionAddEntry(sectionData, me, text, MAX_STRING_LENGTH, start, end);
     }
     else
     {
