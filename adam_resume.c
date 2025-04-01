@@ -383,6 +383,11 @@ JSON_OBJECT_END_SECTION()
 */
 #define MAX_STRING_LENGTH 2147483647
 
+/** max number of resume sections that can be hidden
+    by resume options
+*/
+#define RESUME_OPTIONS_MAX_HIDDEN_SECTIONS 32
+
 //
 // MARK: ENUMS
 //
@@ -396,6 +401,8 @@ typedef enum Result_e
     RESULT_WARNING,
     RESULT_ERROR,
     RESULT_NEXT,
+    RESULT_YES,
+    RESULT_NO,
     RESULT_COUNT
 } Result_t;
 
@@ -826,6 +833,14 @@ struct ResumeOptions_s
     */
     Format_t m_DisplayFormat;
 
+    /** array of section names that 
+        should be hidden.  
+    */
+    const char* m_HideSectionName[RESUME_OPTIONS_MAX_HIDDEN_SECTIONS];
+
+    /** number of sections to hide in m_HideSectionName
+    */
+    int m_HideSectionCount;
 };
 
 /** resume data organizes entries into sections
@@ -1436,6 +1451,15 @@ static const char* JsonArrayNextIndex( // recursive
 static Result_t ResumeInit(
     Resume_t* me,
     ResumeOptions_t* resumeOptions);
+
+/** check if the specified section should be hidden
+    \param me
+    \param sectionTitle null-terminated string
+    \returns RESULT_YES if hidden or RESULT_NO
+*/
+static Result_t ResumeOptionsIsHiddenSection(
+    ResumeOptions_t* me,
+    const char* sectionTitle);
 
 /** deinit
     \param me
@@ -3483,6 +3507,43 @@ static Result_t ResumeInit(
 }
 
 /**********************************************************/
+static Result_t ResumeOptionsIsHiddenSection(
+    ResumeOptions_t* me,
+    const char* sectionTitle)
+{
+    if(sectionTitle)
+    {
+        if(sectionTitle[0] != '\0')
+        {
+            int index = 0;
+            while(index < me->m_HideSectionCount)
+            {
+                if(strcmp(sectionTitle, me->m_HideSectionName[index]) == 0)
+                {
+                    // resume option to hide this section is set
+                    return RESULT_YES;
+                }
+                index++;
+            }
+        }
+        else
+        {
+            // empty title.
+            // always hide sections with no title
+            return RESULT_YES;
+        }
+    }
+    else
+    {
+        // title missing.
+        // always hide invalid sections
+        return RESULT_YES;
+    }
+
+    return RESULT_NO;
+}
+
+/**********************************************************/
 static void ResumeDeInit(
     Resume_t* me)
 {
@@ -3974,11 +4035,16 @@ static void ResumePrintPlainText(
     SectionData_t* sectionData = ResumeGetSectionData(me, sectionIndex);
     while(sectionData)
     {
+        int displayMax = sectionData->m_SectionDisplayMax;
+        if(ResumeOptionsIsHiddenSection(&me->m_ResumeOptions, sectionData->m_SectionTitle) == RESULT_YES)
+        {
+            displayMax = 0;
+        }
+
         if(sectionData->m_SectionDisplayMax != DISPLAY_NONE)
         {
             int dateStringStart = 0;
             int displayCount = 0;
-            int displayMax = sectionData->m_SectionDisplayMax;
 
             // apply resume options to display max
             if(me->m_ResumeOptions.m_ExtendedDisplayCount == DISPLAY_ALL)
@@ -4745,6 +4811,35 @@ int main(
                 {
                     MainPrintVersion();
                     return 0;
+                }
+                else if(strcmp(arg, "-H") == 0)
+                {
+                    // hidden section title expected
+                    index++;
+                    if(index < argc)
+                    {
+                        arg = argv[index];
+                        if(arg)
+                        {
+                            if(resumeOptions.m_HideSectionCount < RESUME_OPTIONS_MAX_HIDDEN_SECTIONS)
+                            {
+                                resumeOptions.m_HideSectionName[resumeOptions.m_HideSectionCount] = arg;
+                                resumeOptions.m_HideSectionCount++;
+                            }
+                            else
+                            {
+                                // out of resume options hidden sections
+                            }
+                        }
+                        else
+                        {
+                            // invalid section name
+                        }
+                    }
+                    else
+                    {
+                        // missing section name
+                    }
                 }
                 else if(strcmp(arg, "-f") == 0)
                 {
